@@ -16,6 +16,11 @@ jobs:
       - name: Setup Project
         id: checkout
         uses: actions/checkout@master
+      - name: Login to GCR
+        uses: docker/login-action@v1
+        with:
+          username: secrets
+          password: ${{ secrets.GCP_SA_KEY }}
       - name: Build & Publish Image
         uses: docker/build-push-action@v2
         id: build
@@ -23,8 +28,6 @@ jobs:
           context: .
           push: true
           tags: $BASE_IMAGE:${{ github.sha }}
-          username: _json_key
-          password: ${{ secrets.GCP_SA_KEY }}
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
