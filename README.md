@@ -194,12 +194,16 @@ terraform plan
 # Apply Terraform
 terraform apply
 
+gsutil mb gs://h3-indexes
+
+gsutil cp $(pwd)/data/*.sql gs://h3-indexes
+
+gcloud sql instances import mvillarreal-pg-sql gs://h3-indexes/PE-Lima.sql \
+--database poi_manager
+
 
 ```
 
-gcloud sql connect mvillarreal-pg-sql --user=postgres
-
-CREATE DATABASE poi_manager
 
 # Github Actions Pipeline
 
@@ -210,42 +214,54 @@ on:
     branches:
     - master
 env:
-  REGION: us-east1-a
-  PROJECT_ID: mvillarrealb-demo-platform
-  BASE_IMAGE: gcr.io/mvillarrealb-demo-platform/poi-api
-  DATABASE_INSTANCE: mvillarrealb-pg-sql
+  REGION: us-east1
+  PROJECT_ID: mvillarreal-demo-platform
+  BASE_IMAGE: gcr.io/mvillarreal-demo-platform/poi-api
+  DATABASE_INSTANCE: mvillarreal-pg-sql
   SERVICE_NAME: poi-api
+  DATABASE_IP: 10.85.0.3
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup Project
-      id: checkout
-      uses: actions/checkout@master
-    - name: Build & Publish Image
-      uses: docker/build-push-action@v2
-      id: build
-      with:
-        context: .
-        push: true
-        tags: ${{ github.sha }}
-        image: $BASE_IMAGE
-    - name: Deploy to Cloud Run
-      id: deploy
-      uses: google-github-actions/deploy-cloudrun@main
-      with:
-        region: $REGION
-        service: $SERVICE_NAME
-        image: $BASE_IMAGE/${{ github.sha }}
-        credentials: ${{ secrets.GCP_SA_KEY }}
-        env_vars: "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
-        flags: "--add-cloudsql-instances '$PROJECT_ID:$REGION:$DATABASE_INSTANCE'"
-    - name: Run e2e Test
-      uses: matt-ball/newman-action@master
-      id: test
-      with:
-        collection: postman_collection.json
-        options:
-          envVar:
-            BASE_URL: "${{ steps.deploy.outputs.url }}"
+      - name: Setup Project
+        id: checkout
+        uses: actions/checkout@master
+      - name: Login to GCR
+        uses: docker/login-action@v1
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCR_JSON_KEY }}
+      - name: Build & Publish Image
+        uses: docker/build-push-action@v2
+        id: build
+        with:
+          context: .
+          push: true
+          tags: ${{ env.BASE_IMAGE }}:${{ github.sha }}
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@main
+        with:
+          region: ${{ env.REGION }}
+          service: ${{ env.SERVICE_NAME }}
+          image: ${{ env.BASE_IMAGE }}:${{ github.sha }}
+          credentials: ${{ secrets.GCP_SA_KEY }}
+          env_vars: "DATABASE_HOST=${{ env.DATABASE_IP }},DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
+          flags: "--allow-unauthenticated --vpc-connector vpc-conn --add-cloudsql-instances '${{ env.PROJECT_ID }}:${{env.REGION}}:${{env.DATABASE_INSTANCE}}'"
+  test:
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    steps:
+      - name: Run e2e Test
+        uses: matt-ball/newman-action@master
+        id: test
+        with:
+          collection: postman_collection.json
+
 ```
