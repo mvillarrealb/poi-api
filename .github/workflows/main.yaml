@@ -22,10 +22,12 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ github.sha }}
-          image: $BASE_IMAGE
+          tags: $BASE_IMAGE:${{ github.sha }}
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
   deploy:
     runs-on: ubuntu-latest
+    needs: [build]
     steps:
       - name: Deploy to Cloud Run
         id: deploy
@@ -39,6 +41,7 @@ jobs:
           flags: "--add-cloudsql-instances '$PROJECT_ID:$REGION:$DATABASE_INSTANCE'"
   test:
     runs-on: ubuntu-latest
+    needs: [build, deploy]
     steps:
       - name: Run e2e Test
         uses: matt-ball/newman-action@master
