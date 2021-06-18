@@ -5,9 +5,9 @@ on:
     - master
 env:
   REGION: us-east1-a
-  PROJECT_ID: mvillarrealb-demo-platform
-  BASE_IMAGE: gcr.io/mvillarrealb-demo-platform/poi-api
-  DATABASE_INSTANCE: mvillarrealb-pg-sql
+  PROJECT_ID: mvillarreal-demo-platform
+  BASE_IMAGE: gcr.io/mvillarreal-demo-platform/poi-api
+  DATABASE_INSTANCE: mvillarreal-pg-sql
   SERVICE_NAME: poi-api
 jobs:
   build:
@@ -28,7 +28,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: $BASE_IMAGE:${{ github.sha }}
+          tags: ${{ env.BASE_IMAGE }}:${{ github.sha }}
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
@@ -37,12 +37,12 @@ jobs:
         id: deploy
         uses: google-github-actions/deploy-cloudrun@main
         with:
-          region: $REGION
-          service: $SERVICE_NAME
-          image: $BASE_IMAGE/${{ github.sha }}
+          region: ${{ env.REGION }}
+          service: ${{ env.SERVICE_NAME }}
+          image: ${{ env.BASE_IMAGE }}/${{ github.sha }}
           credentials: ${{ secrets.GCP_SA_KEY }}
           env_vars: "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
-          flags: "--add-cloudsql-instances '$PROJECT_ID:$REGION:$DATABASE_INSTANCE'"
+          flags: "--add-cloudsql-instances '${{ env.PROJECT_ID }}:${{env.REGION}}:${{env.DATABASE_INSTANCE}}'"
   test:
     runs-on: ubuntu-latest
     needs: [build, deploy]
