@@ -9,6 +9,7 @@ env:
   BASE_IMAGE: gcr.io/mvillarreal-demo-platform/poi-api
   DATABASE_INSTANCE: mvillarreal-pg-sql
   SERVICE_NAME: poi-api
+  DATABSE_IP: 10.85.0.3
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,7 +42,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           image: ${{ env.BASE_IMAGE }}:${{ github.sha }}
           credentials: ${{ secrets.GCP_SA_KEY }}
-          env_vars: "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
+          env_vars: "DATABASE_HOST=${{env.DATABASE_IP}},DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
           flags: "--add-cloudsql-instances '${{ env.PROJECT_ID }}:${{env.REGION}}:${{env.DATABASE_INSTANCE}}'"
   test:
     runs-on: ubuntu-latest
