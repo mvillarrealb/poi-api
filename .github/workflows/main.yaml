@@ -13,32 +13,35 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup Project
-      id: checkout
-      uses: actions/checkout@master
-    - name: Build & Publish Image
-      uses: docker/build-push-action@v2
-      id: build
-      with:
-        context: .
-        push: true
-        tags: ${{ github.sha }}
-        image: $BASE_IMAGE
-    - name: Deploy to Cloud Run
-      id: deploy
-      uses: google-github-actions/deploy-cloudrun@main
-      with:
-        region: $REGION
-        service: $SERVICE_NAME
-        image: $BASE_IMAGE/${{ github.sha }}
-        credentials: ${{ secrets.GCP_SA_KEY }}
-        env_vars: "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
-        flags: "--add-cloudsql-instances '$PROJECT_ID:$REGION:$DATABASE_INSTANCE'"
-    - name: Run e2e Test
-      uses: matt-ball/newman-action@master
-      id: test
-      with:
-        collection: postman_collection.json
-        options:
-          envVar:
-            BASE_URL: "${{ steps.deploy.outputs.url }}"
+      - name: Setup Project
+        id: checkout
+        uses: actions/checkout@master
+      - name: Build & Publish Image
+        uses: docker/build-push-action@v2
+        id: build
+        with:
+          context: .
+          push: true
+          tags: ${{ github.sha }}
+          image: $BASE_IMAGE
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@main
+        with:
+          region: $REGION
+          service: $SERVICE_NAME
+          image: $BASE_IMAGE/${{ github.sha }}
+          credentials: ${{ secrets.GCP_SA_KEY }}
+          env_vars: "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
+          flags: "--add-cloudsql-instances '$PROJECT_ID:$REGION:$DATABASE_INSTANCE'"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run e2e Test
+        uses: matt-ball/newman-action@master
+        id: test
+        with:
+          collection: postman_collection.json

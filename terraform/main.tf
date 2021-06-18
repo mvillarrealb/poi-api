@@ -11,13 +11,13 @@ provider "google-beta" {
 }
 
 resource "google_compute_network" "private_network" {
-  provider     = "google-beta"
+  provider     = google-beta
   name         = "private-network"
   routing_mode = "REGIONAL"
 }
 
 resource "google_compute_global_address" "private_ip_address" {
-  provider      = "google-beta"
+  provider      = google-beta
   name          = "private-ip-address"
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
@@ -26,17 +26,18 @@ resource "google_compute_global_address" "private_ip_address" {
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
-  provider = google-beta
+  provider                = google-beta
   network                 = google_compute_network.private_network.self_link
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
 
 /*Investigar este betulio*/
-resource "google_vpc_access_connector" "vpc_serverless_connector" {
-  name          = "serverless_vpc"
+resource "google_vpc_access_connector" "connector" {
+  provider = google-beta
+  name          = "vpc-conn"
   ip_cidr_range = "10.8.0.0/28"
-  network       = google_compute_network.private_network.self_link
+  network       = google_compute_network.private_network.name
 }
 
 
@@ -49,10 +50,10 @@ resource "google_sql_database_instance" "cloud_sql" {
   settings {
     tier = "db-f1-micro"
     user_labels = {
-      Name = "${var.database_name}"
-      Environment = "${var.environment}"
-      Tier = "database"
-      Type = "Postgres11"
+      name = "${var.database_name}"
+      environment = "${var.environment}"
+      tier = "database"
+      type = "postgres"
     }
     ip_configuration {
       ipv4_enabled    = false

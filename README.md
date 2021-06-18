@@ -141,8 +141,17 @@ gcloud projects create mvillarreal-demo-platform
 # Set project as current running project
 gcloud config set project mvillarreal-demo-platform
 
+gcloud config get-value project
+
 # Enable cloud Run api
 gcloud services enable run.googleapis.com
+
+gcloud services enable cloudresourcemanager.googleapis.com
+
+gcloud services enable vpcaccess.googleapis.com
+
+# Enable compute engine(for serverless vpc access)
+gcloud services enable compute.googleapis.com
 
 # Enable container Registry
 gcloud services enable containerregistry.googleapis.com
@@ -163,19 +172,34 @@ gcloud iam service-accounts create mvillarrealb-gha-saccount \
 gcloud projects add-iam-policy-binding mvillarreal-demo-platform \
 --member serviceAccount:mvillarrealb-gha-saccount@mvillarreal-demo-platform.iam.gserviceaccount.com \
 --role roles/editor 
+
+# Adding networking admin permission
+gcloud projects add-iam-policy-binding mvillarreal-demo-platform \
+--member serviceAccount:mvillarrealb-gha-saccount@mvillarreal-demo-platform.iam.gserviceaccount.com \
+--role roles/servicenetworking.networksAdmin
+
+
   
 
 # Export service account key for terraform(keep this in a safe place)
-gcloud iam service-accounts keys create $(pwd)/service-account-key.json \
+gcloud iam service-accounts keys create $(pwd)/terraform/service-account-key.json \
 --iam-account mvillarrealb-gha-saccount@mvillarreal-demo-platform.iam.gserviceaccount.com
 
-# Apply terraform
-cd terraform && terraform apply
+# Setup terraform
+cd terraform && terraform init
 
-gcloud sql connect mvillarrealb-pg-sql --user=postgres
+# Preview terraform plan
+terraform plan
+
+# Apply Terraform
+terraform apply
+
+
+```
+
+gcloud sql connect mvillarreal-pg-sql --user=postgres
 
 CREATE DATABASE poi_manager
-```
 
 # Github Actions Pipeline
 
