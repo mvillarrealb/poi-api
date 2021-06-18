@@ -39,7 +39,7 @@ jobs:
         with:
           region: ${{ env.REGION }}
           service: ${{ env.SERVICE_NAME }}
-          image: ${{ env.BASE_IMAGE }}/${{ github.sha }}
+          image: ${{ env.BASE_IMAGE }}:${{ github.sha }}
           credentials: ${{ secrets.GCP_SA_KEY }}
           env_vars: "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
           flags: "--add-cloudsql-instances '${{ env.PROJECT_ID }}:${{env.REGION}}:${{env.DATABASE_INSTANCE}}'"
