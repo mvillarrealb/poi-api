@@ -4,7 +4,7 @@ on:
     branches:
     - master
 env:
-  REGION: us-east1-a
+  REGION: us-east1
   PROJECT_ID: mvillarreal-demo-platform
   BASE_IMAGE: gcr.io/mvillarreal-demo-platform/poi-api
   DATABASE_INSTANCE: mvillarreal-pg-sql
