@@ -43,7 +43,7 @@ jobs:
           image: ${{ env.BASE_IMAGE }}:${{ github.sha }}
           credentials: ${{ secrets.GCP_SA_KEY }}
           env_vars: "DATABASE_HOST=${{ env.DATABASE_IP }},DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }},DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
-          flags: "--vpc-conector 'vpc-conn' --add-cloudsql-instances '${{ env.PROJECT_ID }}:${{env.REGION}}:${{env.DATABASE_INSTANCE}}'"
+          flags: "--vpc-conector vpc-conn --add-cloudsql-instances '${{ env.PROJECT_ID }}:${{env.REGION}}:${{env.DATABASE_INSTANCE}}'"
   test:
     runs-on: ubuntu-latest
     needs: [build, deploy]
